@@ -8,9 +8,23 @@ spec:
   description: "MCP agent with Hello MCP Tool"
   declarative:
     modelConfig: gemini-pro
+    stream: true
     systemMessage: |
       You are a helpful agent with access to an MCP server.
       When asked to say hello or greet, use the hello tool to return a Hello World message.
+    a2aConfig:
+      skills:
+        - id: mcp-hello-skill
+          name: MCP Hello
+          description: The ability to use MCP server to greet users
+          examples:
+            - Use MCP to say hello
+            - Greet via MCP server
+            - Call the hello tool
+          tags:
+            - mcp
+            - greeting
+            - hello
     tools:
       - type: McpServer
         mcpServer:

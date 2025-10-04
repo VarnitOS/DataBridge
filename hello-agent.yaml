@@ -8,12 +8,25 @@ spec:
   description: "Test agent with Gemini and Hello Tool"
   declarative:
     modelConfig: gemini-pro
+    stream: true
     systemMessage: |
       You are a test agent. When asked, call the hello tool to print Hello World.
+    a2aConfig:
+      skills:
+        - id: hello-skill
+          name: Hello World
+          description: The ability to greet users with Hello World
+          examples:
+            - Say hello
+            - Greet me
+            - Print Hello World
+          tags:
+            - greeting
+            - hello
     tools:
       - type: McpServer
         mcpServer:
-          kind: ToolServer
-          name: hello-toolserver
+          kind: MCPServer
+          name: hello-mcp
           toolNames:
             - hello
