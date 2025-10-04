@@ -1,0 +1,19 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: hello-world-agent
+  namespace: default
+spec:
+  type: Declarative
+  description: "Test agent with Gemini and Hello Tool"
+  declarative:
+    modelConfig: gemini-pro
+    systemMessage: |
+      You are a test agent. When asked, call the hello tool to print Hello World.
+    tools:
+      - type: McpServer
+        mcpServer:
+          kind: ToolServer
+          name: hello-toolserver
+          toolNames:
+            - hello
