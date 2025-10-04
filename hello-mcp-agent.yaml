@@ -14,8 +14,8 @@ spec:
     tools:
       - type: McpServer
         mcpServer:
-          kind: ToolServer
-          name: hello-mcp-toolserver
+          kind: MCPServer
+          name: hello-mcp-server
           toolNames:
             - hello
 
