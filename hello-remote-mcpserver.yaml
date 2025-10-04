@@ -1,0 +1,10 @@
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: hello-remote-mcp
+  namespace: default
+spec:
+  protocol: STREAMABLE_HTTP
+  url: http://hello-mcp-server.default:3000/mcp
+  description: "Remote MCP server exposing Hello World tool"
+

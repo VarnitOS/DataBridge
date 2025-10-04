@@ -28,8 +28,9 @@ spec:
     tools:
       - type: McpServer
         mcpServer:
-          kind: MCPServer
-          name: hello-mcp-server
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: hello-remote-mcp
           toolNames:
             - hello
 
