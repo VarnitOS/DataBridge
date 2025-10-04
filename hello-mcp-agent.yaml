@@ -1,0 +1,21 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: hello-mcp-agent
+  namespace: default
+spec:
+  type: Declarative
+  description: "MCP agent with Hello MCP Tool"
+  declarative:
+    modelConfig: gemini-pro
+    systemMessage: |
+      You are a helpful agent with access to an MCP server.
+      When asked to say hello or greet, use the hello tool to return a Hello World message.
+    tools:
+      - type: McpServer
+        mcpServer:
+          kind: ToolServer
+          name: hello-mcp-toolserver
+          toolNames:
+            - hello
+
