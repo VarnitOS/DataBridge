@@ -1,0 +1,14 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: simple-test-agent
+  namespace: default
+spec:
+  type: Declarative
+  description: "Minimal test agent without tools"
+  declarative:
+    modelConfig: gemini-pro
+    stream: true
+    systemMessage: |
+      You are a simple test agent.
+
