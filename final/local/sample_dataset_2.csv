@@ -1,0 +1,9 @@
+customer_number,contact_email,full_name,registration_date,member_tier,lifetime_value,last_purchase,address
+C001,john.smith@email.com,John Smith,2023-01-15,gold,2450.00,2024-09-15,123 Main St
+C002,sarah.j@email.com,Sarah Johnson,2023-02-20,silver,1200.00,2024-08-22,456 Oak Ave
+C003,mbrown@email.com,Michael Brown,2023-03-10,bronze,450.00,2024-03-15,789 Pine Rd
+C004,emily.davis@email.com,Emily Davis,2023-04-05,platinum,5600.00,2024-10-01,321 Elm St
+C005,d.wilson@email.com,David Wilson,2023-05-12,platinum,8900.00,2024-09-28,654 Maple Dr
+C011,william.m@email.com,William Martinez,2023-11-10,silver,1800.00,2024-09-20,111 Cedar Ln
+C012,patricia.g@email.com,Patricia Garcia,2023-12-05,gold,3200.00,2024-10-02,222 Birch Way
+C013,charles.r@email.com,Charles Rodriguez,2024-01-15,bronze,650.00,2024-09-10,333 Spruce Ct

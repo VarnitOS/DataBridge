@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Master Agent / API Gateway
+  master-agent:
+    build: .
+    container_name: ey_master_agent
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_NAME=master-agent
+      - AGENT_TYPE=master
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+    networks:
+      - ey_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Gemini Agent Pool (simulated)
+  gemini-agent-pool:
+    build: .
+    container_name: ey_gemini_pool
+    environment:
+      - SERVICE_NAME=gemini-agent-pool
+      - AGENT_TYPE=gemini
+      - POOL_SIZE=3
+    env_file:
+      - .env
+    networks:
+      - ey_network
+    command: ["python", "-c", "print('Gemini Agent Pool Ready'); import time; time.sleep(3600)"]
+    restart: unless-stopped
+
+  # Merge Agent Pool (simulated)
+  merge-agent-pool:
+    build: .
+    container_name: ey_merge_pool
+    environment:
+      - SERVICE_NAME=merge-agent-pool
+      - AGENT_TYPE=merge
+      - POOL_SIZE=5
+    env_file:
+      - .env
+    networks:
+      - ey_network
+    command: ["python", "-c", "print('Merge Agent Pool Ready'); import time; time.sleep(3600)"]
+    restart: unless-stopped
+
+  # Quality Agent Pool (simulated)
+  quality-agent-pool:
+    build: .
+    container_name: ey_quality_pool
+    environment:
+      - SERVICE_NAME=quality-agent-pool
+      - AGENT_TYPE=quality
+      - POOL_SIZE=5
+    env_file:
+      - .env
+    networks:
+      - ey_network
+    command: ["python", "-c", "print('Quality Agent Pool Ready'); import time; time.sleep(3600)"]
+    restart: unless-stopped
+
+  # Snowflake Connector (simulated)
+  snowflake-connector:
+    build: .
+    container_name: ey_snowflake_connector
+    environment:
+      - SERVICE_NAME=snowflake-connector
+      - AGENT_TYPE=snowflake
+    env_file:
+      - .env
+    networks:
+      - ey_network
+    command: ["python", "-c", "print('Snowflake Connector Ready'); import time; time.sleep(3600)"]
+    restart: unless-stopped
+
+networks:
+  ey_network:
+    driver: bridge
+
+volumes:
+  uploads:
+  outputs:
+

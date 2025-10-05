@@ -1,0 +1,12 @@
+cust_id,cust_name,email_addr,signup_dt,total_spend,account_status
+1001,John Doe,john@example.com,2024-01-15,5000.00,active
+1002,Jane Smith,jane@example.com,2024-02-20,3500.50,active
+1003,Bob Johnson,bob@example.com,2024-03-10,7200.25,active
+1004,Alice Williams,alice@example.com,2024-04-05,1200.00,inactive
+1005,Charlie Brown,charlie@example.com,2024-05-12,9500.75,active
+1006,Diana Prince,diana@example.com,2024-06-08,2300.50,active
+1007,Ethan Hunt,ethan@example.com,2024-07-14,4500.00,active
+1008,Fiona Green,fiona@example.com,2024-08-19,3100.25,inactive
+1009,George Martin,george@example.com,2024-09-23,6700.00,active
+1010,Hannah Lee,hannah@example.com,2024-10-01,8200.50,active
+

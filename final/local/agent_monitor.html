@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EY Data Integration - Agent Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .status.active {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status.idle {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .status.working {
+            background: #f59e0b;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .logs {
+            background: #1e293b;
+            color: #10b981;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-left: 3px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .log-time {
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+        
+        .log-agent {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+        
+        .log-message {
+            color: #e5e7eb;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 8px 0;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .connection-status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .connection-status.connected {
+            background: #10b981;
+            color: white;
+        }
+        
+        .connection-status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .test-controls {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+        }
+        
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        
+        .session-info {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 EY Data Integration - Agent Monitor</h1>
+        
+        <div id="connectionStatus" class="connection-status disconnected">
+            ⚠️ Not Connected - Start a session to see agents in action
+        </div>
+        
+        <div class="test-controls card">
+            <h2>🧪 Test Agent System</h2>
+            <button class="btn" onclick="startDemoMode()" style="background: #10b981; font-size: 1.1rem;">
+                🚀 Start Demo Mode (All Agents)
+            </button>
+            <button class="btn" onclick="stopDemoMode()" style="background: #ef4444;">
+                ⏹️ Stop Demo
+            </button>
+            <button class="btn" onclick="clearLogs()">Clear Logs</button>
+            <hr style="margin: 20px 0;">
+            <div>
+                <input type="file" id="file1" accept=".csv,.xlsx" />
+                <label>Dataset 1</label>
+            </div>
+            <div>
+                <input type="file" id="file2" accept=".csv,.xlsx" />
+                <label>Dataset 2</label>
+            </div>
+            <button class="btn" onclick="uploadAndTest()">Upload & Start Analysis</button>
+            
+            <div id="sessionInfo" class="session-info" style="display: none;">
+                <strong>Session ID:</strong> <span id="sessionId">-</span><br>
+                <strong>Status:</strong> <span id="status">-</span>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h2>🧠 Master Agent</h2>
+                <div class="metric">
+                    <span>Status:</span>
+                    <span class="status active" id="masterStatus">Active</span>
+                </div>
+                <div class="metric">
+                    <span>Decisions Made:</span>
+                    <span class="metric-value" id="masterDecisions">0</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>✨ Gemini Agents</h2>
+                <div class="metric">
+                    <span>Active Instances:</span>
+                    <span class="metric-value" id="geminiCount">0</span>
+                </div>
+                <div id="geminiAgents"></div>
+            </div>
+            
+            <div class="card">
+                <h2>❄️ Snowflake Agents</h2>
+                <div class="metric">
+                    <span>Active Instances:</span>
+                    <span class="metric-value" id="snowflakeCount">0</span>
+                </div>
+                <div id="snowflakeAgents"></div>
+            </div>
+            
+            <div class="card">
+                <h2>🔀 Merge Agents</h2>
+                <div class="metric">
+                    <span>Active Instances:</span>
+                    <span class="metric-value" id="mergeCount">0</span>
+                </div>
+                <div id="mergeAgents"></div>
+            </div>
+            
+            <div class="card">
+                <h2>✅ Quality Agents</h2>
+                <div class="metric">
+                    <span>Active Instances:</span>
+                    <span class="metric-value" id="qualityCount">0</span>
+                </div>
+                <div id="qualityAgents"></div>
+            </div>
+            
+            <div class="card">
+                <h2>📋 Jira Agent</h2>
+                <div class="metric">
+                    <span>Tickets Created:</span>
+                    <span class="metric-value" id="jiraTickets">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📊 Real-Time Agent Logs</h2>
+            <div class="logs" id="logs">
+                <div class="log-entry">
+                    <span class="log-time">[Waiting for activity...]</span>
+                    <div class="log-message">Upload datasets to see agents in action!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let ws = null;
+        let sessionId = null;
+        let demoMode = false;
+        let demoInterval = null;
+        let agentCounts = {
+            gemini: 0,
+            merge: 0,
+            quality: 0,
+            snowflake: 0
+        };
+        
+        const demoAgents = [
+            {type: 'Master Agent', messages: [
+                'Analyzing dataset complexity...',
+                'Determined schema complexity: MEDIUM',
+                'Allocating resources: 2 Gemini, 5 Merge, 5 Quality agents',
+                'Estimated processing time: 45 seconds',
+                'Routing task to Gemini agent pool...'
+            ]},
+            {type: 'Gemini Schema Agent 1', messages: [
+                'Analyzing schema for Dataset A',
+                'Detected 15 columns in Dataset A',
+                'Semantic analysis: CRM customer data',
+                'Identified primary key: cust_id',
+                'Found 3 potential join keys'
+            ]},
+            {type: 'Gemini Schema Agent 2', messages: [
+                'Analyzing schema for Dataset B',
+                'Detected 18 columns in Dataset B',
+                'Semantic analysis: Client management data',
+                'Identified primary key: customer_number',
+                'Column types: 60% VARCHAR, 30% NUMBER, 10% DATE'
+            ]},
+            {type: 'Gemini Mapping Agent', messages: [
+                'Proposing column mappings...',
+                'Mapping: cust_id ↔ customer_number (confidence: 95%)',
+                'Mapping: email_addr ↔ contact_email (confidence: 92%)',
+                'Mapping: signup_dt ↔ registration_date (confidence: 88%)',
+                'Found 2 ambiguous mappings (confidence < 70%)',
+                'Triggering Jira escalation for low-confidence mappings...'
+            ]},
+            {type: 'Gemini SQL Generator', messages: [
+                'Generating optimized Snowflake SQL...',
+                'Building FULL OUTER JOIN query',
+                'Adding QUALIFY for deduplication',
+                'Applying column transformations',
+                'SQL query generated: 45 lines'
+            ]},
+            {type: 'Snowflake Ingestion Agent 1', messages: [
+                'Uploading file to Snowflake stage @EY_STAGE_abc123_1',
+                'File uploaded: 1.2 MB',
+                'Using INFER_SCHEMA to detect column types',
+                'Creating table RAW_abc123_DATASET_1',
+                'COPY INTO completed: 10,000 rows loaded'
+            ]},
+            {type: 'Snowflake Ingestion Agent 2', messages: [
+                'Uploading file to Snowflake stage @EY_STAGE_abc123_2',
+                'File uploaded: 0.8 MB',
+                'Schema inferred: 18 columns',
+                'Creating table RAW_abc123_DATASET_2',
+                'COPY INTO completed: 8,000 rows loaded'
+            ]},
+            {type: 'Merge Agent 1', messages: [
+                'Executing JOIN operation on Snowflake',
+                'Using X-LARGE warehouse for optimal performance',
+                'Query execution started...'
+            ]},
+            {type: 'Merge Agent 2', messages: [
+                'Running deduplication using QUALIFY',
+                'Found 12 duplicate rows',
+                'Removed duplicates: keeping most recent'
+            ]},
+            {type: 'Merge Agent 3', messages: [
+                'Applying data normalization',
+                'Normalizing email addresses to lowercase',
+                'Formatting phone numbers to standard format'
+            ]},
+            {type: 'Merge Agent 4', messages: [
+                'Executing type conversions',
+                'Converting date formats to ISO-8601',
+                'Casting numeric strings to proper types'
+            ]},
+            {type: 'Merge Agent 5', messages: [
+                'Reconciling conflicting values',
+                'Merge operation completed',
+                'Created table: MERGED_abc123_FINAL',
+                'Result: 17,988 rows, 25 columns'
+            ]},
+            {type: 'Quality Agent 1 (Null Check)', messages: [
+                'Scanning for NULL values...',
+                'Column "phone_number": 5.2% null',
+                'Column "email": 0.3% null',
+                'Null check: PASSED (within thresholds)'
+            ]},
+            {type: 'Quality Agent 2 (Duplicate Check)', messages: [
+                'Checking for duplicate rows...',
+                'Found 0 duplicates (already removed)',
+                'Duplicate check: PASSED'
+            ]},
+            {type: 'Quality Agent 3 (Type Validator)', messages: [
+                'Validating data types...',
+                'Email format validation: 99.7% valid',
+                'Date format validation: 100% valid',
+                'Type validation: PASSED'
+            ]},
+            {type: 'Quality Agent 4 (Integrity Check)', messages: [
+                'Running integrity checks...',
+                'Foreign key validation: PASSED',
+                'Value range checks: PASSED',
+                'Integrity check: PASSED'
+            ]},
+            {type: 'Quality Agent 5 (Stats)', messages: [
+                'Generating statistics...',
+                'Total rows: 17,988',
+                'Unique customers: 17,976',
+                'Average order value: $4,523.45',
+                'Statistical analysis: COMPLETE'
+            ]},
+            {type: 'Jira Agent', messages: [
+                'Creating Jira ticket: EYDI-1234',
+                'Story: Resolve mapping ambiguity for "created_date" vs "signup_timestamp"',
+                'Priority: HIGH',
+                'Assigned to: Data Integration Team',
+                'Ticket created successfully'
+            ]}
+        ];
+        
+        function addLog(agent, message, time = new Date()) {
+            const logsDiv = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">[${time.toLocaleTimeString()}]</span>
+                <span class="log-agent">${agent}:</span>
+                <span class="log-message">${message}</span>
+            `;
+            logsDiv.insertBefore(entry, logsDiv.firstChild);
+            
+            // Keep only last 50 logs
+            while (logsDiv.children.length > 50) {
+                logsDiv.removeChild(logsDiv.lastChild);
+            }
+        }
+        
+        function connectWebSocket(sid) {
+            if (ws) ws.close();
+            
+            ws = new WebSocket(`ws://localhost:8000/api/v1/ws/${sid}`);
+            
+            ws.onopen = () => {
+                document.getElementById('connectionStatus').className = 'connection-status connected';
+                document.getElementById('connectionStatus').textContent = '✅ Connected - Monitoring agents in real-time';
+                addLog('System', 'WebSocket connected - listening for agent activity');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'agent_log') {
+                    addLog(data.data.agent, data.data.message);
+                    updateAgentCount(data.data.agent);
+                } else if (data.type === 'status_update') {
+                    document.getElementById('status').textContent = data.data.current_step || 'Processing';
+                    addLog('System', `Progress: ${data.data.progress}% - ${data.data.current_step}`);
+                } else if (data.type === 'complete') {
+                    addLog('System', '✅ Pipeline completed successfully!');
+                } else if (data.type === 'error') {
+                    addLog('System', `❌ Error: ${data.data.error}`);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                addLog('System', '⚠️ WebSocket error - check connection');
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+                document.getElementById('connectionStatus').textContent = '⚠️ Disconnected';
+            };
+        }
+        
+        function updateAgentCount(agentName) {
+            const agentType = agentName.toLowerCase();
+            if (agentType.includes('gemini')) {
+                agentCounts.gemini++;
+                document.getElementById('geminiCount').textContent = agentCounts.gemini;
+            } else if (agentType.includes('merge')) {
+                agentCounts.merge++;
+                document.getElementById('mergeCount').textContent = agentCounts.merge;
+            } else if (agentType.includes('quality')) {
+                agentCounts.quality++;
+                document.getElementById('qualityCount').textContent = agentCounts.quality;
+            } else if (agentType.includes('snowflake')) {
+                agentCounts.snowflake++;
+                document.getElementById('snowflakeCount').textContent = agentCounts.snowflake;
+            }
+        }
+        
+        async function uploadAndTest() {
+            const file1 = document.getElementById('file1').files[0];
+            const file2 = document.getElementById('file2').files[0];
+            
+            if (!file1 || !file2) {
+                alert('Please select both datasets!');
+                return;
+            }
+            
+            addLog('User', 'Uploading datasets...');
+            
+            const formData = new FormData();
+            formData.append('dataset1', file1);
+            formData.append('dataset2', file2);
+            
+            try {
+                // Upload
+                const uploadRes = await fetch('http://localhost:8000/api/v1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                sessionId = uploadData.session_id;
+                
+                document.getElementById('sessionInfo').style.display = 'block';
+                document.getElementById('sessionId').textContent = sessionId;
+                document.getElementById('status').textContent = 'Uploaded';
+                
+                addLog('System', `✅ Files uploaded! Session ID: ${sessionId}`);
+                connectWebSocket(sessionId);
+                
+                // Trigger analysis
+                setTimeout(async () => {
+                    addLog('Master Agent', 'Starting schema analysis...');
+                    document.getElementById('masterDecisions').textContent = '1';
+                    
+                    const analyzeRes = await fetch('http://localhost:8000/api/v1/analyze', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({session_id: sessionId})
+                    });
+                    const analyzeData = await analyzeRes.json();
+                    
+                    addLog('System', `✅ Analysis complete! Found ${analyzeData.mappings?.length || 0} column mappings`);
+                    document.getElementById('status').textContent = 'Analysis Complete';
+                }, 1000);
+                
+            } catch (error) {
+                addLog('System', `❌ Error: ${error.message}`);
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = `
+                <div class="log-entry">
+                    <span class="log-time">[Logs cleared]</span>
+                    <div class="log-message">Ready for new activity...</div>
+                </div>
+            `;
+            agentCounts = {gemini: 0, merge: 0, quality: 0, snowflake: 0};
+            document.getElementById('geminiCount').textContent = '0';
+            document.getElementById('mergeCount').textContent = '0';
+            document.getElementById('qualityCount').textContent = '0';
+            document.getElementById('snowflakeCount').textContent = '0';
+        }
+        
+        function startDemoMode() {
+            if (demoMode) return;
+            
+            demoMode = true;
+            clearLogs();
+            
+            document.getElementById('connectionStatus').className = 'connection-status connected';
+            document.getElementById('connectionStatus').textContent = '✅ Demo Mode Active - Simulating Agent Ecosystem';
+            
+            addLog('System', '🚀 Demo Mode Started - Initializing all agents...');
+            
+            // Initialize session
+            sessionId = 'demo_' + Math.random().toString(36).substring(7);
+            document.getElementById('sessionInfo').style.display = 'block';
+            document.getElementById('sessionId').textContent = sessionId;
+            document.getElementById('status').textContent = 'Processing';
+            
+            // Set agent counts immediately
+            document.getElementById('geminiCount').textContent = '4';
+            document.getElementById('snowflakeCount').textContent = '2';
+            document.getElementById('mergeCount').textContent = '5';
+            document.getElementById('qualityCount').textContent = '5';
+            document.getElementById('masterDecisions').textContent = '1';
+            
+            agentCounts = {gemini: 4, snowflake: 2, merge: 5, quality: 5};
+            
+            // Show agent instances
+            document.getElementById('geminiAgents').innerHTML = `
+                <div class="status working">Schema Agent 1</div>
+                <div class="status working">Schema Agent 2</div>
+                <div class="status working">Mapping Agent</div>
+                <div class="status working">SQL Generator</div>
+            `;
+            
+            document.getElementById('snowflakeAgents').innerHTML = `
+                <div class="status working">Ingestion Agent 1</div>
+                <div class="status working">Ingestion Agent 2</div>
+            `;
+            
+            document.getElementById('mergeAgents').innerHTML = `
+                <div class="status working">Join Agent</div>
+                <div class="status working">Dedupe Agent</div>
+                <div class="status working">Normalization Agent</div>
+                <div class="status working">Transform Agent</div>
+                <div class="status working">Reconciliation Agent</div>
+            `;
+            
+            document.getElementById('qualityAgents').innerHTML = `
+                <div class="status working">Null Checker</div>
+                <div class="status working">Duplicate Checker</div>
+                <div class="status working">Type Validator</div>
+                <div class="status working">Integrity Checker</div>
+                <div class="status working">Stats Agent</div>
+            `;
+            
+            // Simulate agent activity
+            let messageIndex = 0;
+            let agentIndex = 0;
+            
+            demoInterval = setInterval(() => {
+                if (!demoMode) return;
+                
+                const agent = demoAgents[agentIndex];
+                const message = agent.messages[messageIndex];
+                
+                if (message) {
+                    addLog(agent.type, message);
+                    
+                    // Update Jira count if it's jira agent
+                    if (agent.type.includes('Jira')) {
+                        document.getElementById('jiraTickets').textContent = '1';
+                    }
+                    
+                    messageIndex++;
+                    
+                    if (messageIndex >= agent.messages.length) {
+                        messageIndex = 0;
+                        agentIndex++;
+                        
+                        if (agentIndex >= demoAgents.length) {
+                            // Pipeline complete
+                            addLog('System', '✅ PIPELINE COMPLETED SUCCESSFULLY!');
+                            addLog('System', '📊 Merged dataset ready: 17,988 rows, 25 columns');
+                            addLog('System', '🎯 Quality checks: ALL PASSED');
+                            addLog('System', '📋 Jira ticket created for 1 ambiguous mapping');
+                            document.getElementById('status').textContent = 'Complete';
+                            
+                            // Mark agents as idle
+                            setTimeout(() => {
+                                const statuses = document.querySelectorAll('.status.working');
+                                statuses.forEach(s => {
+                                    s.classList.remove('working');
+                                    s.classList.add('idle');
+                                });
+                            }, 2000);
+                            
+                            // Restart cycle
+                            setTimeout(() => {
+                                if (demoMode) {
+                                    agentIndex = 0;
+                                    document.getElementById('masterDecisions').textContent = 
+                                        parseInt(document.getElementById('masterDecisions').textContent) + 1;
+                                    addLog('System', '🔄 Starting new processing cycle...');
+                                    
+                                    // Mark agents as working again
+                                    const statuses = document.querySelectorAll('.status.idle');
+                                    statuses.forEach(s => {
+                                        s.classList.remove('idle');
+                                        s.classList.add('working');
+                                    });
+                                }
+                            }, 5000);
+                        }
+                    }
+                }
+            }, 1500); // Message every 1.5 seconds
+        }
+        
+        function stopDemoMode() {
+            demoMode = false;
+            if (demoInterval) {
+                clearInterval(demoInterval);
+                demoInterval = null;
+            }
+            
+            document.getElementById('connectionStatus').className = 'connection-status disconnected';
+            document.getElementById('connectionStatus').textContent = '⚠️ Demo Mode Stopped';
+            
+            // Mark all agents as idle
+            const statuses = document.querySelectorAll('.status.working');
+            statuses.forEach(s => {
+                s.classList.remove('working');
+                s.classList.add('idle');
+            });
+            
+            addLog('System', '⏹️ Demo Mode stopped');
+        }
+        
+        // Simulate some activity on load
+        setTimeout(() => {
+            addLog('System', 'Agent Monitor initialized');
+            addLog('System', '💡 Click "Start Demo Mode" to see all agents in action!');
+        }, 500);
+    </script>
+</body>
+</html>

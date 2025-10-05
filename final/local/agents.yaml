@@ -1,0 +1,254 @@
+# EY Data Integration - Multi-Agent System Configuration
+# This file documents all agents running in the system
+
+system_info:
+  name: "EY Data Integration AI Assistant"
+  version: "1.0.0"
+  description: "Enterprise-grade data integration platform with multi-agent AI orchestration"
+  api_endpoint: "http://localhost:8002/chat"
+  visualization: "http://localhost:8001"
+
+# Master Orchestration Agent
+master_agent:
+  name: "Conversational AI Orchestrator"
+  agent_id: "master_assistant"
+  type: "conversational_orchestrator"
+  model: "Gemini 2.5 Pro"
+  description: "Main conversational interface that understands natural language and orchestrates specialized agents"
+  capabilities:
+    - "Natural language understanding"
+    - "Intent detection"
+    - "Agent orchestration"
+    - "Workflow execution"
+    - "Response generation"
+  api_endpoint: "/chat"
+  status: "running"
+  port: 8002
+
+# Specialized Agents
+agents:
+  - name: "Validation Monitor Agent"
+    agent_id: "system_monitor"
+    type: "validation_monitor"
+    capability: "data_quality"
+    description: "Real-time validation monitoring - catches obvious data quality issues"
+    responsibilities:
+      - "Monitor for NULL data"
+      - "Detect generic column names (c1, c2, c3...)"
+      - "Catch INFER_SCHEMA failures"
+      - "Validate table existence"
+      - "Check row counts"
+    status: "running"
+    auto_start: true
+
+  - name: "Snowflake Ingestion Agent"
+    agent_id: "system_ingestion"
+    type: "snowflake_ingestion"
+    capability: "data_ingestion"
+    description: "Handles file uploads to Snowflake and table creation"
+    responsibilities:
+      - "Upload CSV/Excel files to Snowflake stages"
+      - "Create tables from uploaded files"
+      - "Infer and create schemas"
+      - "Load data into tables"
+      - "Report ingestion status"
+    tools:
+      - name: "ingest_file"
+        parameters:
+          - "file_path"
+          - "session_id"
+          - "dataset_num"
+    status: "running"
+    auto_start: true
+
+  - name: "Gemini Schema Reader Agent"
+    agent_id: "system_schema"
+    type: "gemini_schema_reader"
+    capability: "schema_analysis"
+    model: "Gemini 2.5 Pro"
+    description: "Analyzes table schemas using AI"
+    responsibilities:
+      - "Read Snowflake table schemas"
+      - "Identify column types"
+      - "Suggest improvements"
+      - "Detect relationships"
+      - "Sample data analysis"
+    tools:
+      - name: "read_and_analyze_schema"
+        parameters:
+          - "table_name"
+          - "include_sample"
+          - "sample_size"
+    status: "running"
+    auto_start: true
+
+  - name: "Gemini Mapping Agent"
+    agent_id: "system_mapping"
+    type: "gemini_mapping"
+    capability: "conflict_detection"
+    model: "Gemini 2.5 Pro"
+    description: "AI-powered column mapping between datasets"
+    responsibilities:
+      - "Propose intelligent column mappings"
+      - "Detect semantic similarities"
+      - "Identify join keys"
+      - "Suggest transformations"
+      - "Calculate confidence scores"
+    tools:
+      - name: "propose_column_mappings"
+        parameters:
+          - "table1"
+          - "table2"
+          - "schema1 (optional)"
+          - "schema2 (optional)"
+          - "confidence_threshold"
+    status: "running"
+    auto_start: true
+
+  - name: "Join Agent"
+    agent_id: "system_join"
+    type: "join_agent"
+    capability: "merge_execution"
+    description: "Executes SQL JOIN operations to merge datasets"
+    responsibilities:
+      - "Execute FULL OUTER JOIN"
+      - "Execute INNER JOIN"
+      - "Execute LEFT/RIGHT JOIN"
+      - "Preserve all columns"
+      - "Add metadata columns"
+      - "Generate merge SQL"
+    tools:
+      - name: "execute_join_merge"
+        parameters:
+          - "table1"
+          - "table2"
+          - "mappings"
+          - "merge_type"
+          - "output_table_name"
+    status: "running"
+    auto_start: true
+
+  - name: "Stats Agent"
+    agent_id: "system_stats"
+    type: "stats"
+    capability: "data_quality"
+    description: "Statistical analysis and data profiling"
+    responsibilities:
+      - "Calculate table statistics"
+      - "Identify primary key candidates"
+      - "Compute null percentages"
+      - "Detect data patterns"
+      - "Generate quality reports"
+    tools:
+      - name: "analyze_table"
+        parameters:
+          - "table_name"
+    status: "running"
+    auto_start: true
+
+# Agent Pool (Additional agents that can be spawned dynamically)
+agent_pool:
+  - name: "Null Checker Agent"
+    type: "null_checker"
+    capability: "data_quality"
+    description: "Validates NULL values in datasets"
+    spawn_on_demand: true
+
+  - name: "Duplicate Detector Agent"
+    type: "duplicate_detector"
+    capability: "data_quality"
+    description: "Detects duplicate records"
+    spawn_on_demand: true
+
+  - name: "Dedupe Agent"
+    type: "dedupe"
+    capability: "merge_execution"
+    description: "Removes duplicate records from merged data"
+    spawn_on_demand: true
+
+# Data Platform
+infrastructure:
+  snowflake:
+    database: "PUBLIC"
+    warehouse: "COMPUTE_WH"
+    role: "ACCOUNTADMIN"
+    tables_created:
+      - "UNIFIED_ACCOUNTS (79,511 rows)"
+      - "UNIFIED_TRANSACTIONS (397,250 rows)"
+      - "MERGED_* (various)"
+
+# Communication Protocols
+communication:
+  protocol: "A2A (Agent-to-Agent)"
+  registry: "AgentRegistry"
+  event_bus: "EventBus"
+  capabilities:
+    - "data_ingestion"
+    - "schema_analysis"
+    - "sql_generation"
+    - "conflict_detection"
+    - "merge_execution"
+    - "data_quality"
+    - "jira_integration"
+    - "monitoring"
+
+# API Endpoints
+api_endpoints:
+  - path: "/chat"
+    method: "POST"
+    description: "Main conversational interface"
+    request_body:
+      message: "string (required) - Natural language message"
+      session_id: "string (optional) - Session identifier"
+    response:
+      answer: "string - AI response"
+      confidence: "integer - Confidence score (0-100)"
+      reasoning: "string (optional) - Explanation of actions taken"
+
+  - path: "/"
+    method: "GET"
+    description: "Web UI - Beautiful chat interface"
+    returns: "HTML page"
+
+  - path: "/health"
+    method: "GET"
+    description: "Health check endpoint"
+    returns: "Server status"
+
+# Example Usage
+examples:
+  - description: "Merge two datasets"
+    request:
+      message: "merge RAW_ULTIMATE_MERGE_001_ACCOUNTS_DATASET_1 and RAW_ULTIMATE_MERGE_001_ACCOUNTS_DATASET_2"
+      session_id: "demo_001"
+    workflow:
+      - "1. Schema Reader Agent analyzes both tables"
+      - "2. Mapping Agent proposes column mappings using AI"
+      - "3. Join Agent executes FULL OUTER JOIN"
+      - "4. Stats Agent validates merged data"
+    response: "✅ Merge complete with 30,040 rows"
+
+  - description: "Analyze a table"
+    request:
+      message: "analyze UNIFIED_ACCOUNTS"
+      session_id: "demo_002"
+    workflow:
+      - "1. Schema Reader Agent reads table schema"
+      - "2. Stats Agent computes statistics"
+    response: "Schema analysis with 79 columns"
+
+  - description: "Validate data quality"
+    request:
+      message: "validate data quality in UNIFIED_TRANSACTIONS"
+      session_id: "demo_003"
+    workflow:
+      - "1. Validation Monitor runs sanity checks"
+      - "2. Stats Agent analyzes data patterns"
+    response: "Quality report with 0 critical issues"
+
+# Performance Metrics
+performance:
+  simple_query_response: "0.03 seconds"
+  full_merge_workflow: "40-60 seconds"
+  concurrent_agents: "6 active + pool"
+  data_processed: "476K+ rows unified"

@@ -1,0 +1,10 @@
+customer_number,client_full_name,contact_email,registration_date,purchase_amount,client_tier,region
+C-1001,John Doe,JOHN@EXAMPLE.COM,2024-01-15,5000,Gold,North America
+C-1004,Alice Williams,alice@example.com,2024-04-05,1200,Silver,Europe
+C-1011,Kevin Zhang,kevin@example.com,2024-11-10,4200,Gold,Asia
+C-1012,Laura Martinez,laura@example.com,2024-11-15,3300,Silver,South America
+C-1013,Michael Scott,michael@example.com,2024-11-20,7500,Platinum,North America
+C-1002,Jane Smith,jane@example.com,2024-02-20,3500,Gold,North America
+C-1014,Nancy Drew,nancy@example.com,2024-12-01,2100,Silver,Europe
+C-1015,Oliver Twist,oliver@example.com,2024-12-05,5600,Gold,Europe
+
