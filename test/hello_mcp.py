@@ -1,43 +1,15 @@
-import sys
-import json
-import asyncio
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+#!/usr/bin/env python3
+# hello_mcp.py
+from mcp.server.fastmcp import FastMCP
 
-# Create MCP server
-app = Server("hello-mcp")
+# Create the server
+mcp = FastMCP("hello-mcp")
 
-@app.list_tools()
-async def list_tools() -> list[Tool]:
-    """List available tools."""
-    return [
-        Tool(
-            name="hello",
-            description="Return a Hello World message",
-            inputSchema={
-                "type": "object",
-                "properties": {},
-            },
-        )
-    ]
-
-@app.call_tool()
-async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    """Handle tool calls."""
-    if name == "hello":
-        return [TextContent(type="text", text="Hello World")]
-    else:
-        raise ValueError(f"Unknown tool: {name}")
-
-async def main():
-    """Run the MCP server."""
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(
-            read_stream,
-            write_stream,
-            app.create_initialization_options()
-        )
+# Register a tool
+@mcp.tool()
+def hello() -> str:
+    """Return a Hello World message"""
+    return "Hello World"
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    mcp.run()

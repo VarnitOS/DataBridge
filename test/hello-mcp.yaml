@@ -1,0 +1,13 @@
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: hello-mcp
+  namespace: kagent
+spec:
+  deployment:
+    image: hello-mcp:latest
+    args: ["python3", "/app/hello_mcp.py"]
+    port: 3000
+  transportType: streamableHttp
+  streamableHttpTransport:
+    port: 3000

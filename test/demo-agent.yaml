@@ -1,0 +1,34 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: hello-world-agent
+  namespace: kagent
+spec:
+  type: Declarative
+  description: "Agent that uses Gemini + local Hello MCP tool"
+  declarative:
+    modelConfig: gemini-pro
+    stream: true
+    systemMessage: |
+      You are a test agent. When asked, call the hello tool from the hello-mcp MCPServer to print Hello World.
+    a2aConfig:
+      skills:
+        - id: hello-skill
+          name: Hello World
+          description: The ability to greet users with Hello World
+          examples:
+            - Say hello
+            - Greet me
+            - Print Hello World
+          tags:
+            - greeting
+            - hello
+    tools:
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: MCPServer      # ✅ must match CRD kind
+          name: hello-mcp      # ✅ must match your MCPServer name
+          toolNames:
+            - hello            # ✅ must match the @mcp.tool() name in hello_mcp.py
+

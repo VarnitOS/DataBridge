@@ -1,0 +1,31 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: pet-agent
+  namespace: kagent
+spec:
+  description: An agent that calls the Pet ToolServer
+  type: Declarative
+  declarative:
+    modelConfig: default-model-config
+    systemMessage: |
+      You are a friendly pet agent. Use the pet-toolserver to fetch cat or dog links.
+    tools:
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: ToolServer        # 👈 this matches the CR kind you applied
+          name: pet-toolserver     # 👈 must equal your ToolServer’s metadata.name
+          toolNames:
+            - get-pet              # 👈 must match what your toolserver exports
+    a2aConfig:
+      skills:
+        - id: pet-skill
+          name: Pet Finder
+          description: Fetches a link to a cat or dog
+          inputModes: [text]
+          outputModes: [text]
+          tags: [pets, fun]
+          examples:
+            - "Show me a cat"
+            - "Give me a dog link"

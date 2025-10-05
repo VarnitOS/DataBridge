@@ -21,7 +21,7 @@ import { ScrollArea } from "./components/ui/scroll-area";
 import { parseCSV, getFieldNames, generateMockBankData } from "./utils/csvParser";
 import { generateAIMappings, mergeDatasets } from "./utils/aiMappingSimulator";
 import { mockConflicts } from "./utils/mockData";
-import { Sparkles, Info, AlertTriangle, Bot, Send, Activity, Zap } from "lucide-react";
+import { Sparkles, Info, AlertTriangle, Bot, Send, Activity, Zap, Loader2 } from "lucide-react";
 import { Progress } from "./components/ui/progress";
 import { Badge } from "./components/ui/badge";
 import { CustomTab } from "./components/AddTabDialog";
@@ -97,6 +97,7 @@ export default function App() {
   const [mergedData, setMergedData] = useState<Record<string, any>[]>([]);
   const [status, setStatus] = useState<ProcessingStatus>("idle");
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [activeAgents, setActiveAgents] = useState<Set<string>>(new Set());
   const [currentStep, setCurrentStep] = useState<Step>("upload");
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [conflicts] = useState(mockConflicts);
@@ -132,6 +133,44 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
+
+  // Function to update active agents based on chatbot activity
+  const updateActiveAgents = (agentIds: string[]) => {
+    setActiveAgents(new Set(agentIds));
+    
+    // Auto-clear after 3 seconds
+    setTimeout(() => {
+      setActiveAgents(new Set());
+    }, 3000);
+  };
+
+  // Simulate agent activity when chat messages arrive
+  useEffect(() => {
+    if (isChatLoading) {
+      // Simulate sequential agent activation during processing
+      const sequence = [
+        { agents: ['system_schema', 'system_monitor'], delay: 500 },
+        { agents: ['system_mapping'], delay: 2000 },
+        { agents: ['system_join'], delay: 1500 },
+        { agents: ['system_monitor', 'system_stats'], delay: 1000 },
+      ];
+
+      let timeouts: NodeJS.Timeout[] = [];
+      let cumulativeDelay = 0;
+
+      sequence.forEach(({ agents, delay }) => {
+        const timeout = setTimeout(() => {
+          updateActiveAgents(agents);
+        }, cumulativeDelay);
+        timeouts.push(timeout);
+        cumulativeDelay += delay;
+      });
+
+      return () => {
+        timeouts.forEach(clearTimeout);
+      };
+    }
+  }, [isChatLoading]);
 
   const handleAnalyze = async () => {
     const uploadedFiles = financialInstitutions.filter((fi) => fi.file);
@@ -858,62 +897,145 @@ export default function App() {
                           </Card>
                         </ParticleCard>
 
-                        {/* Jenkins-style Pipeline Visualization */}
-                        <ParticleCard className="card card--border-glow" glowColor="132, 0, 255" particleCount={8} enableTilt>
-                          <Card className="p-6">
-                            <h3 className="font-semibold text-lg mb-6">Pipeline Progress</h3>
-                            <div className="space-y-6">
-                              {/* Vertical thick green line */}
-                              <div className="relative">
-                                <div className="absolute left-3 top-0 bottom-0 w-1.5 bg-gradient-to-b from-green-500 to-green-600 rounded-full shadow-lg" />
-                              
-                                {/* Job 1 */}
-                                <div className="relative flex items-start gap-4 pb-6">
-                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 border-4 border-card shadow-lg flex items-center justify-center z-10">
-                                    <span className="text-white text-xs font-bold">✓</span>
-                                  </div>
-                                  <div className="flex-1 pt-0.5">
-                                    <p className="font-semibold text-foreground text-sm">Data Ingestion</p>
-                                    <p className="text-xs text-muted-foreground">Completed • 2.3s</p>
-                                  </div>
-                                </div>
-
-                                {/* Job 2 */}
-                                <div className="relative flex items-start gap-4 pb-6">
-                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 border-4 border-card shadow-lg flex items-center justify-center z-10">
-                                    <span className="text-white text-xs font-bold">✓</span>
-                                  </div>
-                                  <div className="flex-1 pt-0.5">
-                                    <p className="font-semibold text-foreground text-sm">Schema Mapping</p>
-                                    <p className="text-xs text-muted-foreground">Completed • 1.8s</p>
+                        {/* Agent Pipeline Visualization */}
+                        <div>
+                          <h3 className="font-semibold text-lg mb-6">Agent Pipeline</h3>
+                          <div className="relative">
+                            {/* Vertical connector line running through all agents */}
+                            <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-gradient-to-b from-green-500 via-green-500 to-muted" />
+                            
+                            <div className="space-y-0">
+                              {/* Agent 1: Schema Analysis */}
+                              <div className="relative flex items-start gap-4 pb-4">
+                                <div className="relative flex-shrink-0">
+                                  <div className={`w-6 h-6 rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10 relative transition-all duration-300 ${
+                                    activeAgents.has('system_schema') || activeAgents.has('system_monitor') 
+                                      ? 'bg-green-500 animate-pulse' 
+                                      : 'bg-muted'
+                                  }`}>
+                                    {activeAgents.has('system_schema') || activeAgents.has('system_monitor') ? (
+                                      <Loader2 className="w-3 h-3 text-white animate-spin" />
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs font-bold">○</span>
+                                    )}
                                   </div>
                                 </div>
+                                <div className="flex-1 pt-0.5">
+                                  <p className={`font-semibold text-sm ${
+                                    activeAgents.has('system_schema') || activeAgents.has('system_monitor')
+                                      ? 'text-green-500'
+                                      : 'text-muted-foreground'
+                                  }`}>Schema Reader</p>
+                                  <p className="text-[10px] text-muted-foreground ml-2">└─ system_schema (Gemini)</p>
+                                  <p className="text-[10px] text-muted-foreground ml-2">└─ system_monitor (Validation)</p>
+                                </div>
+                              </div>
 
-                                {/* Job 3 */}
-                                <div className="relative flex items-start gap-4 pb-6">
-                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 border-4 border-card shadow-lg flex items-center justify-center z-10">
-                                    <span className="text-white text-xs font-bold">✓</span>
-                                  </div>
-                                  <div className="flex-1 pt-0.5">
-                                    <p className="font-semibold text-foreground text-sm">Conflict Resolution</p>
-                                    <p className="text-xs text-muted-foreground">Completed • 3.1s</p>
+                              {/* Agent 2: Mapping */}
+                              <div className="relative flex items-start gap-4 pb-4">
+                                <div className="relative flex-shrink-0">
+                                  <div className={`w-6 h-6 rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10 relative transition-all duration-300 ${
+                                    activeAgents.has('system_mapping')
+                                      ? 'bg-green-500 animate-pulse'
+                                      : 'bg-muted'
+                                  }`}>
+                                    {activeAgents.has('system_mapping') ? (
+                                      <Loader2 className="w-3 h-3 text-white animate-spin" />
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs font-bold">○</span>
+                                    )}
                                   </div>
                                 </div>
+                                <div className="flex-1 pt-0.5">
+                                  <p className={`font-semibold text-sm ${
+                                    activeAgents.has('system_mapping')
+                                      ? 'text-green-500'
+                                      : 'text-muted-foreground'
+                                  }`}>Mapping Agent</p>
+                                  <p className="text-[10px] text-muted-foreground ml-2">└─ system_mapping (Gemini)</p>
+                                  <p className="text-[10px] text-muted-foreground ml-4">└─ calls system_schema</p>
+                                </div>
+                              </div>
 
-                                {/* Job 4 */}
-                                <div className="relative flex items-start gap-4">
-                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 border-4 border-card shadow-lg flex items-center justify-center animate-pulse z-10">
-                                    <span className="text-white text-xs font-bold">✓</span>
+                              {/* Agent 3: Merge Execution */}
+                              <div className="relative flex items-start gap-4 pb-4">
+                                <div className="relative flex-shrink-0">
+                                  <div className={`w-6 h-6 rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10 relative transition-all duration-300 ${
+                                    activeAgents.has('system_join')
+                                      ? 'bg-green-500 animate-pulse'
+                                      : 'bg-muted'
+                                  }`}>
+                                    {activeAgents.has('system_join') ? (
+                                      <Loader2 className="w-3 h-3 text-white animate-spin" />
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs font-bold">○</span>
+                                    )}
                                   </div>
-                                  <div className="flex-1 pt-0.5">
-                                    <p className="font-semibold text-foreground text-sm">Data Merge</p>
-                                    <p className="text-xs text-green-500 font-medium">Completed • 4.2s</p>
+                                </div>
+                                <div className="flex-1 pt-0.5">
+                                  <p className={`font-semibold text-sm ${
+                                    activeAgents.has('system_join')
+                                      ? 'text-green-500'
+                                      : 'text-muted-foreground'
+                                  }`}>Join Agent</p>
+                                  <p className="text-[10px] text-muted-foreground ml-2">└─ system_join (SQL)</p>
+                                  <p className="text-[10px] text-muted-foreground ml-4">└─ FULL_OUTER JOIN</p>
+                                </div>
+                              </div>
+
+                              {/* Agent 4: Quality Check */}
+                              <div className="relative flex items-start gap-4 pb-4">
+                                <div className="relative flex-shrink-0">
+                                  <div className={`w-6 h-6 rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10 relative transition-all duration-300 ${
+                                    activeAgents.has('system_monitor') || activeAgents.has('system_stats')
+                                      ? 'bg-green-500 animate-pulse'
+                                      : 'bg-muted'
+                                  }`}>
+                                    {activeAgents.has('system_monitor') || activeAgents.has('system_stats') ? (
+                                      <Loader2 className="w-3 h-3 text-white animate-spin" />
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs font-bold">○</span>
+                                    )}
                                   </div>
+                                </div>
+                                <div className="flex-1 pt-0.5">
+                                  <p className={`font-semibold text-sm ${
+                                    activeAgents.has('system_monitor') || activeAgents.has('system_stats')
+                                      ? 'text-green-500'
+                                      : 'text-muted-foreground'
+                                  }`}>Quality Check</p>
+                                  <p className="text-[10px] text-muted-foreground ml-2">└─ system_monitor (Validation)</p>
+                                  <p className="text-[10px] text-muted-foreground ml-2">└─ system_stats (Analytics)</p>
+                                </div>
+                              </div>
+
+                              {/* Agent 5: Ingestion (Optional) */}
+                              <div className="relative flex items-start gap-4">
+                                <div className="relative flex-shrink-0">
+                                  <div className={`w-6 h-6 rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10 relative transition-all duration-300 ${
+                                    activeAgents.has('system_ingestion')
+                                      ? 'bg-green-500 animate-pulse'
+                                      : 'bg-muted'
+                                  }`}>
+                                    {activeAgents.has('system_ingestion') ? (
+                                      <Loader2 className="w-3 h-3 text-white animate-spin" />
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs font-bold">○</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex-1 pt-0.5">
+                                  <p className={`font-semibold text-sm ${
+                                    activeAgents.has('system_ingestion')
+                                      ? 'text-green-500'
+                                      : 'text-muted-foreground'
+                                  }`}>Snowflake Ingestion</p>
+                                  <p className="text-[10px] text-muted-foreground ml-2">└─ system_ingestion (optional)</p>
                                 </div>
                               </div>
                             </div>
-                          </Card>
-                        </ParticleCard>
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -925,18 +1047,14 @@ export default function App() {
                             {/* 1 */}
                             <div
                               className={`flex items-start gap-3 p-3 rounded-lg ${
-                                currentStep === "upload"
-                                  ? "bg-primary/10"
-                                  : isDone(currentStep)
+                                isDone(currentStep)
                                   ? "bg-green-500/10"
                                   : "bg-muted/30"
                               }`}
                             >
                               <div
                                 className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                  currentStep === "upload"
-                                    ? "bg-primary text-primary-foreground"
-                                    : isDone(currentStep)
+                                  isDone(currentStep)
                                     ? "bg-green-500 text-white"
                                     : "bg-muted-foreground/20"
                                 }`}

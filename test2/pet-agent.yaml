@@ -1,0 +1,20 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: pet-agent
+  namespace: kagent
+spec:
+  type: Declarative
+  description: "Agent that calls the Pet ToolServer"
+  declarative:
+    modelConfig: gemini-pro
+    systemMessage: |
+      You are a helpful agent. Use the Pet ToolServer to fetch links.
+    tools:
+      - type: ToolServer
+        toolServer:
+          apiGroup: kagent.dev
+          kind: ToolServer
+          name: pet-toolserver
+          toolNames:
+            - find_pet_link

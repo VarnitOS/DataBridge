@@ -1,0 +1,14 @@
+apiVersion: kagent.dev/v1alpha1
+kind: ToolServer
+metadata:
+  name: pet-toolserver
+  namespace: kagent
+spec:
+  description: "Toolserver that returns dog/cat links"
+  config:
+    stdio:
+      command: python3
+      args:
+        - /scripts/pet_tool.py
+      readTimeoutSeconds: 10
+    
