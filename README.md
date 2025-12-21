@@ -1,280 +1,395 @@
-# Kagent Framework with MCP Integration
+# EY Data Integration SaaS - Backend
 
-This project demonstrates the complete setup and testing of the **kagent framework** with **Model Context Protocol (MCP)** servers.
+AI-powered data integration platform for EY using **Gemini 2.5 Pro** and **Snowflake**.
 
-## 🎯 Overview
+## Overview
 
-This repository contains:
-- **MCP Servers**: Python-based MCP servers that expose tools via stdio
-- **Kagent Agents**: AI agents configured to use MCP tools
-- **Kubernetes Manifests**: Complete deployment configurations
-- **Test Suite**: Comprehensive validation of the entire setup
+This is a **hackathon MVP** backend that automates data integration with intelligent schema mapping, conflict resolution, and quality validation. The system uses a **multi-agent architecture** that simulates cloud-native (Kubernetes-ready) deployment.
 
-## 📁 Project Structure
+## Key Features
+
+- 🤖 **Multi-Agent System**: Master Agent orchestrates specialized agent pools (Gemini, Snowflake, Merge, Quality)
+- 🧠 **Gemini 2.5 Pro**: Semantic schema understanding and intelligent column mapping
+- ❄️ **Snowflake-Native**: All data operations executed in Snowflake (no local pandas processing)
+- 🎯 **Autonomous Resource Allocation**: Master Agent decides how many agents to spawn based on workload
+- 📊 **Jira Integration**: Automatic escalation for conflicts and low-confidence mappings
+- 🔄 **Real-time Updates**: WebSocket support for live progress tracking
+- 🐳 **Docker-Ready**: Containerized for Kubernetes deployment demo
+
+## Architecture
 
 ```
-.
-├── test/
-│   ├── hello.py           # Original simple hello tool
-│   ├── hello_mcp.py       # MCP server implementation
-│   └── Dockerfile         # Docker configuration
-├── Dockerfiles/
-│   └── Dockerfile         # Organized Dockerfile
-├── hello-mcp-tool.yaml            # ConfigMap with MCP server code
-├── hello-mcp-server.yaml          # MCPServer resource
-├── hello-mcp-agent.yaml           # Agent using MCP server
-├── hello-agent.yaml               # Alternative agent config
-├── gemini-model.yaml              # Gemini model configuration
-├── test_kagent.py                 # Comprehensive test suite
-└── README.md                      # This file
+┌─────────────────────────────────────────────────────────────┐
+│                      FRONTEND (Separate Team)                │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ REST API + WebSocket
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    FASTAPI BACKEND                           │
+│  Routes: /upload, /analyze, /approve, /merge, /validate     │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+        ┌──────────────┴──────────────┐
+        ▼                             ▼
+┌───────────────────┐         ┌──────────────────┐
+│  MASTER AGENT     │────────▶│  ORCHESTRATION   │
+│  (Decision Maker) │         │  (Agent Spawner) │
+└────────┬──────────┘         └──────────────────┘
+         │
+    ┌────┴────┬────────┬──────────┬──────────┐
+    ▼         ▼        ▼          ▼          ▼
+┌────────┐ ┌─────┐ ┌────────┐ ┌────────┐ ┌────────┐
+│ GEMINI │ │SNOW │ │ MERGE  │ │QUALITY │ │  JIRA  │
+│ AGENTS │ │AGENTS│ │ AGENTS │ │ AGENTS │ │ AGENT  │
+│  (N)   │ │ (N)  │ │ (1-10) │ │  (5)   │ │  (1)   │
+└────┬───┘ └──┬──┘ └────┬───┘ └────┬───┘ └───┬────┘
+     │        │         │          │          │
+     └────────┴─────────┴──────────┴──────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │ SNOWFLAKE API   │
+              │ (Data Platform) │
+              └─────────────────┘
 ```
 
-## 🚀 Components
+## Setup
 
-### 1. MCP Servers
+### Prerequisites
 
-**hello-mcp MCPServer**
-- Runs a simple Python tool via stdio
-- Exposes a `hello` tool that returns "Hello World"
-- Status: ✅ Ready and Running
+- Python 3.10+
+- Snowflake account
+- Google Gemini API key
+- (Optional) Jira account for conflict escalation
 
-**hello-mcp-server MCPServer**
-- Full MCP server implementation with proper protocol
-- Async tool handling
-- Status: ✅ Ready and Running
+### Installation
 
-### 2. Agents
+1. **Clone and navigate to project:**
+   ```bash
+   cd /path/to/local
+   ```
 
-**hello-world-agent**
-- Declarative agent using Gemini model
-- References MCPServer/hello-mcp
-- Configured with a2aConfig skills
-- Tool: hello
+2. **Create virtual environment:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-**hello-mcp-agent**
-- Advanced MCP agent
-- References MCPServer/hello-mcp-server
-- Full skill-based configuration
-- Tool: hello
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 3. Model Configuration
+4. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
 
-- **Model**: gemini-2.5-pro
-- **Provider**: OpenAI (via kagent)
-- **Status**: ✅ Configured and ready
+5. **Required Environment Variables:**
+   ```bash
+   # Snowflake (REQUIRED)
+   SNOWFLAKE_ACCOUNT=your_account.region
+   SNOWFLAKE_USER=your_user
+   SNOWFLAKE_PASSWORD=your_password
+   SNOWFLAKE_WAREHOUSE=your_warehouse
+   SNOWFLAKE_DATABASE=EY_DATA_INTEGRATION
+   
+   # Gemini (REQUIRED)
+   GEMINI_API_KEY=your_gemini_api_key
+   GEMINI_MODEL=gemini-2.5-pro
+   
+   # Jira (OPTIONAL)
+   JIRA_ENABLED=false  # Set to true to enable
+   JIRA_URL=https://your-domain.atlassian.net
+   JIRA_EMAIL=your-email@example.com
+   JIRA_API_TOKEN=your_jira_token
+   ```
 
-## 📋 Prerequisites
-
-- Kubernetes cluster (local or cloud)
-- kubectl configured
-- Python 3.x
-- kagent framework installed
-
-## 🔧 Installation
-
-### 1. Clone the Repository
+### Run the Application
 
 ```bash
-git clone https://github.com/shaunp18/HackValley.git
-cd HackValley
+# Development mode (with auto-reload)
+python main.py
+
+# Or using uvicorn directly
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 2. Deploy MCP Servers
+The API will be available at:
+- **API**: http://localhost:8000
+- **Interactive Docs**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## API Endpoints
+
+### 1. Upload Datasets
+```bash
+POST /api/v1/upload
+Content-Type: multipart/form-data
+
+# Upload two CSV/Excel files
+curl -X POST http://localhost:8000/api/v1/upload \
+  -F "dataset1=@examples/dataset1_customers.csv" \
+  -F "dataset2=@examples/dataset2_clients.csv"
+
+# Response:
+{
+  "session_id": "abc123",
+  "status": "uploaded",
+  "dataset1": {...},
+  "dataset2": {...}
+}
+```
+
+### 2. Analyze Schemas
+```bash
+POST /api/v1/analyze
+Content-Type: application/json
+
+{
+  "session_id": "abc123"
+}
+
+# Response: Mappings proposed by Gemini 2.5 Pro
+{
+  "status": "ready_to_merge",
+  "mappings": [...],
+  "conflicts": [...],
+  "schema_analysis": {...}
+}
+```
+
+### 3. Approve & Merge
+```bash
+POST /api/v1/approve
+Content-Type: application/json
+
+{
+  "session_id": "abc123",
+  "approved_mappings": [...],
+  "merge_type": "full_outer"
+}
+
+# Response:
+{
+  "job_id": "merge_abc123_xyz789",
+  "status": "in_progress",
+  "agents_spawned": {
+    "merge_agents": 5,
+    "quality_agents": 5
+  }
+}
+```
+
+### 4. Check Status
+```bash
+GET /api/v1/status/{job_id}
+
+# Response:
+{
+  "job_id": "merge_abc123_xyz789",
+  "status": "in_progress",
+  "progress_percentage": 75,
+  "logs": [...]
+}
+```
+
+### 5. Validate Quality
+```bash
+POST /api/v1/validate?session_id=abc123
+
+# Response: Quality report
+{
+  "overall_status": "passed",
+  "checks": {...},
+  "recommendations": [...]
+}
+```
+
+### 6. Download Results
+```bash
+GET /api/v1/download/{session_id}?format=csv
+
+# Downloads merged dataset
+```
+
+## MVP Flow (End-to-End)
+
+```mermaid
+sequenceDiagram
+    User->>API: Upload 2 datasets
+    API->>Master Agent: Analyze workload
+    Master Agent->>Gemini Pool: Spawn N agents
+    Gemini Pool->>Snowflake: Analyze schemas
+    Gemini Pool->>Master Agent: Proposed mappings
+    Master Agent->>API: Return mappings
+    API->>User: Display proposal
+    User->>API: Approve mappings
+    API->>Master Agent: Execute merge
+    Master Agent->>Merge Pool: Spawn M agents
+    Merge Pool->>Snowflake: Execute SQL
+    Master Agent->>Quality Pool: Validate
+    Quality Pool->>API: Quality report
+    API->>User: Download dataset
+```
+
+## Agent Allocation Logic
+
+Master Agent **autonomously decides** agent counts:
+
+| Dataset Size | Complexity | Gemini Agents | Merge Agents | Warehouse |
+|--------------|------------|---------------|--------------|-----------|
+| < 10K rows   | Low        | 1             | 1            | X-SMALL   |
+| 10K-100K     | Medium     | 2             | 3            | MEDIUM    |
+| 100K-1M      | High       | 3             | 7            | X-LARGE   |
+| > 1M         | Any        | 3             | 10           | X-LARGE   |
+
+## Conflict Escalation (Jira)
+
+When Gemini detects conflicts:
+- **Confidence < 70%** → Create Jira story
+- **Type mismatch** → Create Jira story
+- **Ambiguous mapping** → Create Jira story
+
+Example Jira Story:
+```
+Title: Data Integration Conflict - Session abc123
+Description: 
+  Ambiguous column mapping detected:
+  - Dataset A: created_date (DATE)
+  - Dataset B: signup_timestamp (TIMESTAMP)
+  - Confidence: 60%
+  
+  Proposed Resolutions:
+  1. Cast both to DATE
+  2. Cast both to TIMESTAMP
+  3. Keep as separate columns
+  
+Priority: High
+Labels: data-integration, auto-created
+```
+
+## Example Datasets
+
+Test datasets are provided in `examples/`:
+- **dataset1_customers.csv**: Customer data with cust_id, email_addr, etc.
+- **dataset2_clients.csv**: Client data with customer_number, contact_email, etc.
+
+Intentional conflicts for testing:
+- Column name differences (cust_id vs customer_number)
+- Email case differences (john@example.com vs JOHN@EXAMPLE.COM)
+- Overlapping but not identical data
+
+## Development
+
+### Project Structure
+
+```
+local/
+├── agents/              # Multi-agent system
+│   ├── master_agent.py  # Orchestrator
+│   ├── gemini/          # Gemini 2.5 Pro agents
+│   ├── snowflake/       # Snowflake operations
+│   ├── merge/           # Merge agent pool
+│   ├── quality/         # Quality validation
+│   └── integration_agents/  # Jira, Datadog
+├── api/                 # FastAPI routes
+├── core/                # Configuration & infrastructure
+├── snowflake/           # Snowflake connection & management
+├── examples/            # Sample datasets
+├── main.py              # Application entry point
+└── requirements.txt     # Dependencies
+```
+
+### Adding New Agents
+
+1. Create agent class in appropriate directory
+2. Implement `execute(task)` method
+3. Register with agent pool manager
+4. Update Master Agent orchestration logic
+
+Example:
+```python
+class MyNewAgent:
+    def __init__(self, agent_id: str, config: Dict):
+        self.agent_id = agent_id
+    
+    async def execute(self, task: Dict[str, Any]) -> Any:
+        # Agent logic here
+        pass
+```
+
+## Docker Deployment (K8s-Ready)
 
 ```bash
-# Deploy ConfigMap with MCP server code
-kubectl apply -f hello-mcp-tool.yaml
+# Build image
+docker build -t ey-data-integration .
 
-# Deploy MCPServers
-kubectl apply -f hello-mcp-server.yaml
+# Run container
+docker run -p 8000:8000 --env-file .env ey-data-integration
+
+# Or use docker-compose for multi-container simulation
+docker-compose up
 ```
 
-### 3. Deploy Agents
+## Troubleshooting
 
+### Snowflake Connection Issues
 ```bash
-# Deploy model configuration
-kubectl apply -f gemini-model.yaml
-
-# Deploy agents
-kubectl apply -f hello-mcp-agent.yaml
-kubectl apply -f hello-agent.yaml
+# Check credentials in .env
+# Ensure warehouse is running
+# Verify network access to Snowflake
 ```
 
-### 4. Verify Deployment
-
+### Gemini API Errors
 ```bash
-# Check MCPServers
-kubectl get mcpserver
-
-# Check Agents
-kubectl get agent
-
-# Check pods
-kubectl get pods | grep hello
+# Verify GEMINI_API_KEY is correct
+# Check API quota
+# Ensure model is "gemini-2.5-pro"
 ```
 
-## ✅ Testing
-
-### Run Comprehensive Test Suite
-
+### Jira Integration Not Working
 ```bash
-python3 test_kagent.py
+# Set JIRA_ENABLED=false to disable
+# Or verify JIRA_API_TOKEN is valid
+# Check JIRA_PROJECT_KEY exists
 ```
 
-### Test Results
+## Roadmap Completion Status
 
-```
-============================================================
-📊 KAGENT FRAMEWORK TEST SUMMARY
-============================================================
-✅ Passed: 15
-❌ Failed: 0
-📈 Total:  15
-============================================================
-🎉 ALL TESTS PASSED!
-```
+- ✅ Phase 1: Foundation (Config, Snowflake, FastAPI)
+- ✅ Phase 2: Core Agents (Master, Gemini, Snowflake Ingestion)
+- ✅ Phase 3: Merge Pipeline (SQL Generator, Merge Agents)
+- ⚠️ Phase 4: Quality & Integrations (Partial - Jira mockable)
+- ⏳ Phase 5: MCP Tools (Placeholder)
+- ⏳ Phase 6: Polish (WebSocket basic, Docker ready)
 
-### What is Tested
+## Demo Script
 
-- ✅ MCPServer resources exist and are ready
-- ✅ MCPServer pods are running
-- ✅ MCP services are accessible
-- ✅ MCP server logs show proper initialization
-- ✅ Agent resources are properly configured
-- ✅ Agents reference correct MCPServers
-- ✅ ModelConfig is set up correctly
-- ✅ ConfigMaps contain required code
-- ✅ Kagent controller is running
-- ✅ Kagent UI is running
+1. **Start server**: `python main.py`
+2. **Upload datasets**: Use examples/ datasets
+3. **Analyze**: Master Agent spawns Gemini agents
+4. **Show mappings**: Gemini 2.5 Pro proposals
+5. **Approve**: Trigger merge with agent pool
+6. **Validate**: Quality checks
+7. **Download**: Merged dataset
 
-## 🔍 Verification Commands
+**Demo talking points:**
+- "Master Agent autonomously decided to spawn X agents"
+- "Gemini 2.5 Pro detected Y conflicts, created Jira tickets"
+- "All operations executed in Snowflake, no local processing"
+- "System is containerized and Kubernetes-ready"
 
-### Check MCPServer Status
+## Support
 
-```bash
-kubectl get mcpserver hello-mcp -o yaml
-kubectl get mcpserver hello-mcp-server -o yaml
-```
+For hackathon questions, refer to the detailed roadmap document.
 
-### Check Agent Status
+## License
 
-```bash
-kubectl describe agent hello-world-agent
-kubectl describe agent hello-mcp-agent
-```
-
-### View MCP Server Logs
-
-```bash
-kubectl logs -l app=hello-mcp-server
-```
-
-### Check Services
-
-```bash
-kubectl get svc | grep hello
-```
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│           Kagent Framework                   │
-│  ┌──────────────────────────────────────┐   │
-│  │  Agents (hello-world-agent, etc.)    │   │
-│  │  - Uses Gemini model                 │   │
-│  │  - Configured with a2aConfig         │   │
-│  │  - References MCP tools              │   │
-│  └──────────────┬───────────────────────┘   │
-│                 │                            │
-│  ┌──────────────▼───────────────────────┐   │
-│  │  MCPServers (hello-mcp-server)       │   │
-│  │  - Stdio transport                   │   │
-│  │  - Tool registration                 │   │
-│  │  - Async handlers                    │   │
-│  └──────────────┬───────────────────────┘   │
-│                 │                            │
-│  ┌──────────────▼───────────────────────┐   │
-│  │  Python MCP Server (hello_mcp.py)    │   │
-│  │  - list_tools()                      │   │
-│  │  - call_tool()                       │   │
-│  │  - Returns "Hello World"             │   │
-│  └──────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-```
-
-## 🐛 Troubleshooting
-
-### MCPServer Not Ready
-
-```bash
-# Check MCPServer status
-kubectl describe mcpserver hello-mcp-server
-
-# Check pod logs
-kubectl logs <mcpserver-pod-name>
-```
-
-### Agent Not Working
-
-```bash
-# Verify MCPServer is running
-kubectl get mcpserver
-
-# Check agent configuration
-kubectl get agent hello-world-agent -o yaml
-
-# Restart kagent controller
-kubectl delete pod -l app=kagent-controller -n default
-```
-
-### Tool Invocation Fails
-
-```bash
-# Test MCP server directly
-kubectl exec -it <mcp-pod-name> -- python /tools/hello_mcp.py
-
-# Check ConfigMap
-kubectl get configmap hello-mcp-tool -o yaml
-```
-
-## 📚 Key Learnings
-
-### CRD Differences
-
-1. **ToolServer**: Only defines stdio command configuration, doesn't deploy pods
-2. **MCPServer**: Full resource with deployment spec, manages pods automatically
-
-### Agent Configuration
-
-- **a2aConfig** (Agent-to-Agent) with skills is required for proper reconciliation
-- **stream: true** enables streaming responses
-- Tools must reference **MCPServer** (not ToolServer) for proper deployment
-
-### MCP Server Implementation
-
-- Use `@app.list_tools()` to register tool schemas
-- Use `@app.call_tool()` to handle tool invocations
-- Must use async functions
-- Returns `TextContent` objects
-
-## 🔗 Resources
-
-- [Kagent Documentation](https://kagent.dev)
-- [MCP Protocol](https://modelcontextprotocol.io)
-- [GitHub Repository](https://github.com/shaunp18/HackValley)
-
-## 📝 License
-
-This project is provided as-is for educational and development purposes.
-
-## 🤝 Contributing
-
-Contributions welcome! Please submit pull requests or open issues on GitHub.
+Hackathon MVP - Internal Use Only
 
 ---
 
-**Status**: ✅ All systems operational
-**Last Updated**: October 4, 2025
-**Test Suite**: 15/15 tests passing
+**Built for EY Hackathon** | Powered by Gemini 2.5 Pro & Snowflake ❄️
 
