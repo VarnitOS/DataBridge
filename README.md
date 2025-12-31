@@ -2,7 +2,7 @@
 
 AI-powered data integration platform for EY using **Gemini 2.5 Pro** and **Snowflake**.
 
-## 🎥 Demo
+## 🎥 Demo (click on thumbnail)
 
 [![Demo Video](https://img.youtube.com/vi/RSs4k3QL_6c/maxresdefault.jpg)](https://www.youtube.com/watch?v=RSs4k3QL_6c)
 
