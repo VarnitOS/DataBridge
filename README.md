@@ -2,6 +2,13 @@
 
 AI-powered data integration platform for EY using **Gemini 2.5 Pro** and **Snowflake**.
 
+## 🎥 Demo
+
+[![Demo Video](https://img.youtube.com/vi/RSs4k3QL_6c/maxresdefault.jpg)](https://www.youtube.com/watch?v=RSs4k3QL_6c)
+
+## DevPost
+👉 https://devpost.com/software/databridge-riu1ek
+
 ## Overview
 
 This is a **hackathon MVP** backend that automates data integration with intelligent schema mapping, conflict resolution, and quality validation. The system uses a **multi-agent architecture** that simulates cloud-native (Kubernetes-ready) deployment.
